@@ -1,0 +1,13 @@
+algo,model,payoff,drift,volatility,mean,speed,correlation,hurst,nb_stocks,nb_paths,nb_dates,spot,strike,dividend,maturity,nb_epochs,hidden_size,factors,ridge_coeff,use_payoff_as_input,train_ITM_only,use_path,price,duration,time_path_gen,comp_time,delta,gamma,theta,rho,vega,greeks_method,price_upper_bound
+RLSM,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,5,20000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,True,True,False,25.015139113999464,0.5277225971221924,0.20816349983215332,0.31955909729003906,,,,,,central,
+
+RLSM,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,5,20000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,23.968348629588814,0.508202075958252,0.19868230819702148,0.30951976776123047,,,,,,central,
+
+RLSM,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,10,20000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,True,True,False,33.97725373352878,0.7196810245513916,0.3998880386352539,0.3197929859161377,,,,,,central,
+
+RLSM,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,10,20000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,32.52057371600049,0.6958625316619873,0.38367247581481934,0.31219005584716797,,,,,,central,
+
+RLSM,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,20,20000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,True,True,False,42.67125223605896,0.9733259677886963,0.7362871170043945,0.23703885078430176,,,,,,central,
+
+RLSM,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,20,20000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,41.37447218796618,0.5812199115753174,0.4349207878112793,0.14629912376403809,,,,,,central,
+

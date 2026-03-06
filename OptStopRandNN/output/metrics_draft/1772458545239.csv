@@ -1,0 +1,9 @@
+algo,model,payoff,drift,volatility,mean,speed,correlation,hurst,nb_stocks,nb_paths,nb_dates,spot,strike,dividend,maturity,nb_epochs,hidden_size,factors,ridge_coeff,use_payoff_as_input,train_ITM_only,use_path,price,duration,time_path_gen,comp_time,delta,gamma,theta,rho,vega,greeks_method,rate,alpha,sigma,beta,lam,x0,y0,dist_par,f_level,f_amp,f_period,price_upper_bound
+RFQI,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,5,10000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,True,True,False,13.49016250017847,1.1178081035614014,0.06641221046447754,1.0513958930969238,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,
+
+RFQI,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,5,10000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,25.384088000134042,1.060368537902832,0.06684136390686035,0.9935271739959717,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,
+
+RFQI,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,10,10000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,True,True,False,33.83962523733796,1.039874792098999,0.10223960876464844,0.9376351833343506,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,
+
+RFQI,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,10,10000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,10.163658921891441,1.058403491973877,0.12665343284606934,0.9317500591278076,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,
+

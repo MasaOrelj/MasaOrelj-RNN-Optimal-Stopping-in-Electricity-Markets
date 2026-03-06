@@ -1,0 +1,5 @@
+algo,model,payoff,drift,volatility,mean,speed,correlation,hurst,nb_stocks,nb_paths,nb_dates,spot,strike,dividend,maturity,nb_epochs,hidden_size,factors,ridge_coeff,use_payoff_as_input,train_ITM_only,use_path,price,duration,time_path_gen,comp_time,delta,gamma,theta,rho,vega,greeks_method,price_upper_bound
+RLSM,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,100,20000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,True,True,False,60.368232641756514,3.2666542530059814,2.7172114849090576,0.5494427680969238,,,,,,central,
+
+RLSM,BlackScholes,MaxCall,0.0,0.2,0.01,2,-0.3,0.75,100,20000,10,100,100,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,60.48726636867674,3.2549684047698975,2.689816474914551,0.5651519298553467,,,,,,central,
+

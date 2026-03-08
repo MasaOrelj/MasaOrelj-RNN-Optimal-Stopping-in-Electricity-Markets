@@ -261,8 +261,6 @@ class HestonWithVar(Heston):
 #############################
 # Electricity markets
 #############################
-import numpy as np
-import math
 
 class ElectricityMarketModel(Model):
     """

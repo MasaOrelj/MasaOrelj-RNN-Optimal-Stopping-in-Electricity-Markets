@@ -81,12 +81,21 @@ class FQI_RL(backward_induction_pricer.AmericanOptionPricer):
     weights = np.zeros(self.nb_base_fcts, dtype=float)
     deltaT = self.model.maturity / nb_dates
     discount_factor = math.exp(-self.model.rate * deltaT)
+
     if self.use_payoff_as_input:
-      paths = stock_paths_with_payoff
+      if self.use_spot_as_input:
+        paths = stock_paths_with_payoff
+      else:
+        paths = np.expand_dims(payoffs, axis=1)
     else:
-      paths = stock_paths
+      if self.use_spot_as_input:
+        paths = stock_paths
+
     if self.use_var:
-      paths = np.concatenate([paths, var_paths], axis=1)
+      if paths is None:
+        paths = var_paths
+      else:
+        paths = np.concatenate([paths, var_paths], axis=1)
 
     for epoch in range(self.nb_epochs):
       for i_path, path in enumerate(range(nb_paths)):

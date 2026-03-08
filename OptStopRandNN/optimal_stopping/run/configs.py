@@ -97,7 +97,7 @@ class _SmallDimensionTable(_DefaultConfig):
 
 @dataclass
 class _VerySmallDimensionTable(_DefaultConfig):
-  nb_stocks: Iterable[int] = (50,)
+  nb_stocks: Iterable[int] = (5,10)
   #(5, 10, 50)
   algos: Iterable[str] = ('FQI',)
   #('NLSM', 'RFQI', 'RLSM', 'LSM', 'FQI')

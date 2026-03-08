@@ -70,6 +70,9 @@ class AmericanOptionPricer:
     self.input_dim = compute_input_dim(self.model, self.use_var,
                        self.use_payoff_as_input,
                        self.use_spot_as_input)
+    
+    if self.input_dim == 0 and not self.use_rnn:
+      raise ValueError("At least one of spot, payoff, or var inputs must be enabled.")
 
     #int: used for ONLSM, tells model which weight to use
     self.which_weight = 0
@@ -107,17 +110,18 @@ class AmericanOptionPricer:
     The optimal stopping algorithm (DOS) where the optimal stopping is
     approximated by a neural network has a different function "stop".
     """
-    stopping_rule = np.zeros(len(stock_values))
+    stopping_rule = np.zeros(len(immediate_exercise_values))
     if self.use_rnn:
       continuation_values = self.calculate_continuation_value(
           discounted_next_values,
           immediate_exercise_values, h)
     else:
       if self.use_var:
-        if self.use_spot_as_input:
-          stock_values = np.concatenate([stock_values, var_paths], axis=1)
-        else:
+        if stock_values is None:
           stock_values = var_paths
+        else:
+          stock_values = np.concatenate([stock_values, var_paths], axis=1)
+      
       continuation_values = self.calculate_continuation_value(
         discounted_next_values,
         immediate_exercise_values, stock_values)
@@ -165,22 +169,35 @@ class AmericanOptionPricer:
         h = hs[date]
       else:
         h = None
+
+
       if self.use_path:
-        varp = None
-        if self.use_var:
-          varp = var_paths[:, :, :date+1]
+        varp = var_paths[:, :, :date+1] if self.use_var else None
         if self.use_payoff_as_input:
-          paths = stock_paths_with_payoff[:, :, :date+1]
+          if self.use_spot_as_input:
+            paths = stock_paths_with_payoff[:, :, :date+1]   # (S, payoff)
+          else:
+            paths = np.expand_dims(payoffs[:, :date+1], axis=1)  # payoff only
         else:
-          paths = stock_paths[:, :, :date+1]
+          if self.use_spot_as_input:
+            paths = stock_paths[:, :, :date+1]    
+          else:
+            paths = None                                     # no base input
       else:
-        varp = None
-        if self.use_var:
-          varp = var_paths[:, :, date]
+        varp = var_paths[:, :, date] if self.use_var else None
+
         if self.use_payoff_as_input:
-          paths = stock_paths_with_payoff[:, :, date]
+          if self.use_spot_as_input:
+            paths = stock_paths_with_payoff[:, :, date]      # (S, payoff)
+          else:
+            paths = np.expand_dims(payoffs[:, date], axis=1) # payoff only
         else:
-          paths = stock_paths[:, :, date]
+          if self.use_spot_as_input:
+            paths = stock_paths[:, :, date]                  # S only
+          else:
+            paths = None                                     # no base input
+
+
       stopping_rule = self.stop(
         paths, immediate_exercise_value,
         values*disc_factor, h=h, var_paths=varp)

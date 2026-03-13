@@ -20,12 +20,12 @@ class LeastSquaresPricer(backward_induction_pricer.AmericanOptionPricer):
 
   def __init__(self, model, payoff, nb_epochs=None, nb_batches=None,
                train_ITM_only=True, use_payoff_as_input=False,
-               use_spot_as_input=True):
+               use_spot_as_input=True, use_var=None):
 
     #regression class:  defines the regression used for the contination value.
     super().__init__(model, payoff, train_ITM_only=train_ITM_only,
              use_payoff_as_input=use_payoff_as_input,
-             use_spot_as_input=use_spot_as_input)
+             use_spot_as_input=use_spot_as_input, use_var=use_var)
     self.regression = regression.LeastSquares(self.input_dim)
 
   def calculate_continuation_value(
@@ -44,31 +44,3 @@ class LeastSquaresPricer(backward_induction_pricer.AmericanOptionPricer):
     )
     return return_values
 
-
-class LeastSquarePricerDeg1(LeastSquaresPricer):
-  """ Only polynomials of degree one are used for the least square regression."""
-  def __init__(self, model, payoff, nb_epochs=None, nb_batches=None,
-               train_ITM_only=True, use_payoff_as_input=False):
-    super().__init__(model, payoff, train_ITM_only=train_ITM_only,
-                     use_payoff_as_input=use_payoff_as_input)
-    self.regression = regression.LeastSquaresDeg1(self.input_dim)
-
-
-class LeastSquarePricerLaguerre(LeastSquaresPricer):
-  """Least Square Monte Carlo using weighted Laguerre basis functions."""
-  def __init__(self, model, payoff, nb_epochs=None, nb_batches=None,
-               train_ITM_only=True, use_payoff_as_input=False):
-    super().__init__(model, payoff, train_ITM_only=train_ITM_only,
-                     use_payoff_as_input=use_payoff_as_input)
-    self.regression = regression.LeastSquaresLaguerre(self.input_dim)
-
-
-class LeastSquarePricerRidge(LeastSquaresPricer):
-  """Least Square Monte Carlo using ridge regression."""
-  def __init__(self, model, payoff, nb_epochs=None, nb_batches=None,
-               train_ITM_only=True, ridge_coeff=1., use_payoff_as_input=False):
-    super().__init__(model, payoff, train_ITM_only=train_ITM_only,
-                     use_payoff_as_input=use_payoff_as_input)
-    self.regression = regression.LeastSquaresRidge(
-      self.input_dim,
-      ridge_coeff=ridge_coeff)

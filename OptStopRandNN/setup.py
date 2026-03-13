@@ -7,7 +7,7 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 with open('LICENSE') as f:
-    license = f.read().splitlines()
+    license = f.read()
 
 
 setuptools.setup(
@@ -22,7 +22,7 @@ setuptools.setup(
     url="https://github.com/HeKrRuTe/OptStopRandNN",
     license=license,
     packages=setuptools.find_packages(),
-    install_requires=requirements,
+    #install_requires=requirements,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",

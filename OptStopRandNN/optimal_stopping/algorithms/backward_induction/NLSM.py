@@ -32,11 +32,11 @@ class NeuralNetworkPricer(backward_induction_pricer.AmericanOptionPricer):
   """
   def __init__(self, model, payoff, nb_epochs=20, nb_batches=None,
                hidden_size=10, train_ITM_only=True, use_payoff_as_input=False,
-               use_spot_as_input=True):
+               use_spot_as_input=True, use_var=None):
     del nb_batches
     super().__init__(model, payoff, train_ITM_only=train_ITM_only,
                      use_payoff_as_input=use_payoff_as_input,
-                     use_spot_as_input=use_spot_as_input)
+                     use_spot_as_input=use_spot_as_input, use_var=use_var)
     #neural regression class: train/evaluation of the neural network.
     self.neural_regression = NeuralRegression(
       self.input_dim,

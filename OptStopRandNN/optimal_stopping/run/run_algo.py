@@ -35,6 +35,7 @@ from optimal_stopping.algorithms.finite_difference import trinomial
 from optimal_stopping.run import write_figures
 from optimal_stopping.algorithms.backward_induction import backward_induction_pricer
 from optimal_stopping.run import configs
+from optimal_stopping.algorithms.backward_induction import LSM_swing_implementation
 
 
 import joblib
@@ -105,12 +106,13 @@ _CSV_HEADERS = ['algo', 'model', 'payoff', 'drift', 'volatility', 'mean',
                 'nb_paths', 'nb_dates', 'spot', 'strike', 'dividend',
                 'maturity', 'nb_epochs', 'hidden_size', 'factors',
                 'ridge_coeff', 'use_payoff_as_input',
-                'train_ITM_only', 'use_path',
+                'train_ITM_only', 'use_path', 'use_var',
                 'price', 'duration', 'time_path_gen', 'comp_time',
                 'delta', 'gamma', 'theta', 'rho', 'vega', 'greeks_method',
                 # electricity model parameters
                 'rate', 'alpha', 'sigma', 'beta', 'lam', 'x0', 'y0',
                 'dist_par', 'f_level', 'f_amp', 'f_period',
+                'num_swings', 'exercise_dates',
                 'price_upper_bound',]
 
 _PAYOFFS = {
@@ -134,6 +136,8 @@ _ALGOS = {
     "NLSM": NLSM.NeuralNetworkPricer,
     #"DOS": DOS.DeepOptimalStopping,
     "RLSM": RLSM.ReservoirLeastSquarePricerFast,
+    "SwingLSM": LSM_swing_implementation.SwingLeastSquaresPricer,
+    "SwingRLSM": LSM_swing_implementation.SwingReservoirLeastSquarePricerFast,
     #"RLSMTanh": RLSM.ReservoirLeastSquarePricerFastTanh,
     #"RLSMRidge": RLSM.ReservoirLeastSquarePricerFastRidge,
     #"RLSMElu": RLSM.ReservoirLeastSquarePricerFastELU,
@@ -163,6 +167,7 @@ _NUM_FACTORS = {
     "RRLSMmix": 3,
     "RRLSM": 2,
     "RLSM": 1,
+    "SwingRLSM": 1,
 }
 
 
@@ -205,9 +210,12 @@ def _run_algos():
         _cfg_list(config, 'beta'), _cfg_list(config, 'lam'), _cfg_list(config, 'x0'),
         _cfg_list(config, 'y0'), _cfg_list(config, 'dist_par'), _cfg_list(config, 'f_level'),
         _cfg_list(config, 'f_amp'), _cfg_list(config, 'f_period'),
+        _cfg_list(config, 'num_swings'),
+        _cfg_list(config, 'exercise_dates'),
         config.nb_epochs, config.hidden_size, config.factors,
         config.ridge_coeff,
         config.train_ITM_only, config.use_path, config.use_payoff_as_input,
+        _cfg_list(config, 'use_var'),
         _cfg_list(config, 'use_spot_as_input')))
 
     # random.shuffle(combinations)
@@ -255,12 +263,16 @@ def _run_algos():
             return None
         header_parts = parts[0].split(',')
         row_parts = parts[1].split(',')
-        if len(header_parts) < 4 or len(row_parts) < 3:
+        # Expect header: algorithm,num_dim,model_name,strike,spot,1,2,...
+        if len(header_parts) < 6 or len(row_parts) < 5:
             return None
         algo = row_parts[0]
         num_dim = row_parts[1]
-        counts = row_parts[3:]
-        return algo, num_dim, counts, header_parts[3:]
+        model_name = row_parts[2]
+        strike = row_parts[3]
+        spot = row_parts[4]
+        counts = row_parts[5:]
+        return algo, num_dim, model_name, strike, spot, counts, header_parts[5:]
 
     for idx in range(tmp_files_idx):
         tmp_stops = os.path.join(tmp_dirpath, str(idx) + '.stops.csv')
@@ -269,10 +281,10 @@ def _run_algos():
                 parsed = _parse_stops_lines(sf.readlines())
                 if parsed is None:
                     continue
-                algo, num_dim, counts, hdr_counts = parsed
+                algo, num_dim, model_name, strike, spot, counts, hdr_counts = parsed
                 if counts_headers is None:
                     counts_headers = hdr_counts
-                aggregated_rows.append((algo, num_dim, counts))
+                aggregated_rows.append((algo, num_dim, model_name, strike, spot, counts))
         except FileNotFoundError:
             continue
 
@@ -287,12 +299,12 @@ def _run_algos():
                         parsed = _parse_stops_lines(sf.readlines())
                         if parsed is None:
                             continue
-                        algo, num_dim, counts, hdr_counts = parsed
+                        algo, num_dim, model_name, strike, spot, counts, hdr_counts = parsed
                         if counts_headers is None:
                             counts_headers = hdr_counts
                         # avoid duplicates
-                        if (algo, num_dim, counts) not in aggregated_rows:
-                            aggregated_rows.append((algo, num_dim, counts))
+                        if (algo, num_dim, model_name, strike, spot, counts) not in aggregated_rows:
+                            aggregated_rows.append((algo, num_dim, model_name, strike, spot, counts))
                 except Exception:
                     continue
     except Exception:
@@ -301,13 +313,13 @@ def _run_algos():
     if counts_headers is not None and aggregated_rows:
         stops_fpath = os.path.normpath(stops_fpath)
         with open(stops_fpath, 'w') as out:
-            header = [ 'algorithm', 'num_dim' ] + counts_headers
+            header = ['algorithm', 'num_dim', 'model_name', 'strike', 'spot'] + counts_headers
             out.write(','.join(header) + '\n')
-            for algo, num_dim, counts in aggregated_rows:
+            for algo, num_dim, model_name, strike, spot, counts in aggregated_rows:
                 # pad or trim counts to match header length
                 wanted = len(counts_headers)
                 counts = counts[:wanted] + ['0']*(max(0, wanted - len(counts)))
-                row = [str(algo), str(num_dim)] + counts
+                row = [str(algo), str(num_dim), str(model_name), str(strike), str(spot)] + counts
                 out.write(','.join(row) + '\n')
 
   return fpath
@@ -320,11 +332,11 @@ def _run_algo(
     # optional electricity params
     rate=None, alpha=None, sigma=None, beta=None, lam=None,
     x0=None, y0=None, dist_par=None, f_level=None, f_amp=None,
-    f_period=None,
+    f_period=None, num_swings=None, exercise_dates=None,
     nb_epochs=None, hidden_size=10,
     factors=(1.,1.,1.), ridge_coeff=1.,
     train_ITM_only=True, use_path=False, use_payoff_as_input=False,
-    use_spot_as_input=True,
+    use_var=None, use_spot_as_input=True,
     fail_on_error=False,
     compute_greeks=False, greeks_method=None, eps=None,
     poly_deg=None, fd_freeze_exe_boundary=True,
@@ -421,12 +433,14 @@ def _run_algo(
                             hidden_size=hidden_size,
                             train_ITM_only=train_ITM_only,
                             use_payoff_as_input=use_payoff_as_input,
-                            use_spot_as_input=use_spot_as_input)
+                            use_spot_as_input=use_spot_as_input,
+                            use_var=use_var)
   elif algo in ["LND", "LN", "LNfast", "LN2"]:
       pricer = _ALGOS[algo](stock_model_, payoff_, nb_epochs=nb_epochs,
                             hidden_size=hidden_size,
                             use_payoff_as_input=use_payoff_as_input,
-                            use_spot_as_input=use_spot_as_input)
+                            use_spot_as_input=use_spot_as_input,
+                            use_var=use_var)
   elif algo in ["DOS", "pathDOS"]:
       if algo == "DOS" and use_path:
           print("change use_path to 'False', otherwise use the algo 'pathDOS'")
@@ -437,7 +451,8 @@ def _run_algo(
       pricer = _ALGOS[algo](stock_model_, payoff_, nb_epochs=nb_epochs,
                             hidden_size=hidden_size, use_path=use_path,
                             use_payoff_as_input=use_payoff_as_input,
-                            use_spot_as_input=use_spot_as_input)
+                            use_spot_as_input=use_spot_as_input,
+                            use_var=use_var)
   elif algo in ["RLSM", "RRLSMmix", "RRLSM", "RLSMTanh", "RLSMElu", "RLSMSilu",
                 "RLSMGelu","RLSMSoftplus", "RLSMSoftplusReinit",
                 "RRFQI", "RFQITanh", "RFQI",]:
@@ -445,62 +460,95 @@ def _run_algo(
                     hidden_size=hidden_size, factors=factors,
                     train_ITM_only=train_ITM_only,
                     use_payoff_as_input=use_payoff_as_input,
-                    use_spot_as_input=use_spot_as_input)
+                    use_spot_as_input=use_spot_as_input,
+                    use_var=use_var)
   elif algo in ["RLSMRidge", "RFQIRidge", "RRLSMRidge"]:
       pricer = _ALGOS[algo](stock_model_, payoff_, nb_epochs=nb_epochs,
                             hidden_size=hidden_size, factors=factors,
                             train_ITM_only=train_ITM_only,
                             ridge_coeff=ridge_coeff,
                             use_payoff_as_input=use_payoff_as_input,
-                            use_spot_as_input=use_spot_as_input)
+                            use_spot_as_input=use_spot_as_input,
+                            use_var=use_var)
   elif algo in ["FQIRidge"]:
       pricer = _ALGOS[algo](stock_model_, payoff_, nb_epochs=nb_epochs,
                             ridge_coeff=ridge_coeff,
                             train_ITM_only=train_ITM_only,
                             use_payoff_as_input=use_payoff_as_input,
-                            use_spot_as_input=use_spot_as_input)
+                            use_spot_as_input=use_spot_as_input,
+                            use_var=use_var)
   elif algo in ["LSM", "LSMDeg1", "LSMLaguerre"]:
       pricer = _ALGOS[algo](stock_model_, payoff_, nb_epochs=nb_epochs,
                             train_ITM_only=train_ITM_only,
                             use_payoff_as_input=use_payoff_as_input,
-                            use_spot_as_input=use_spot_as_input)
+                            use_spot_as_input=use_spot_as_input,
+                            use_var=use_var)
   elif algo in ["LSMRidge"]:
       pricer = _ALGOS[algo](stock_model_, payoff_, nb_epochs=nb_epochs,
                             train_ITM_only=train_ITM_only,
                             ridge_coeff=ridge_coeff,
                             use_payoff_as_input=use_payoff_as_input,
-                            use_spot_as_input=use_spot_as_input)
+                            use_spot_as_input=use_spot_as_input,
+                            use_var=use_var)
   elif "FQI" in algo:
       pricer = _ALGOS[algo](stock_model_, payoff_, nb_epochs=nb_epochs,
                             train_ITM_only=train_ITM_only,
                             use_payoff_as_input=use_payoff_as_input,
-                            use_spot_as_input=use_spot_as_input)
+                            use_spot_as_input=use_spot_as_input,
+                            use_var=use_var)
+  elif algo in ["SwingLSM"]:
+    pricer = _ALGOS[algo](
+        stock_model_, payoff_,
+        nb_epochs=nb_epochs,
+        train_ITM_only=train_ITM_only,
+        use_payoff_as_input=use_payoff_as_input,
+        use_spot_as_input=use_spot_as_input,
+        use_var=use_var,
+        num_swings=num_swings,
+        exercise_dates=exercise_dates,
+    )
+
+  elif algo in ["SwingRLSM"]:
+      pricer = _ALGOS[algo](
+          stock_model_, payoff_,
+          hidden_size=hidden_size,
+          factors=factors,
+          nb_epochs=nb_epochs,
+          train_ITM_only=train_ITM_only,
+          use_payoff_as_input=use_payoff_as_input,
+          use_spot_as_input=use_spot_as_input,
+          use_var=use_var,
+          num_swings=num_swings,
+          exercise_dates=exercise_dates,
+      )
   else:
       pricer = _ALGOS[algo](stock_model_, payoff_, nb_epochs=nb_epochs,
                             use_payoff_as_input=use_payoff_as_input,
-                            use_spot_as_input=use_spot_as_input)
+                            use_spot_as_input=use_spot_as_input,
+                            use_var=use_var)
 
     # Ensure pricer instances get the `use_spot_as_input` flag when their
     # constructors don't accept it. Recompute input_dim accordingly.
   try:
-      from optimal_stopping.algorithms.backward_induction import \
-          backward_induction_pricer as _bip
-      # set attribute so algorithms can consult it
-      setattr(pricer, 'use_spot_as_input', use_spot_as_input)
-      # recompute input_dim to reflect the chosen setting
-      setattr(pricer, 'input_dim', _bip.compute_input_dim(
-          getattr(pricer, 'model', stock_model_),
-          getattr(pricer, 'use_var', False),
-          getattr(pricer, 'use_payoff_as_input', False),
-          use_spot_as_input))
+          from optimal_stopping.algorithms.backward_induction import \
+                  backward_induction_pricer as _bip
+          # set attributes so algorithms can consult them
+          setattr(pricer, 'use_spot_as_input', use_spot_as_input)
+          setattr(pricer, 'use_var', use_var)
+          # recompute input_dim to reflect the chosen setting
+          setattr(pricer, 'input_dim', _bip.compute_input_dim(
+                  getattr(pricer, 'model', stock_model_),
+                  getattr(pricer, 'use_var', False),
+                  getattr(pricer, 'use_payoff_as_input', False),
+                  use_spot_as_input))
   except Exception:
-      pass
+            pass
 
   # expose a tmp-file prefix and some metadata so pricers can write
   # companion files (e.g. stopping-time histograms) into the same
   # tmp-results folder used by the aggregator
   try:
-      setattr(pricer, '_metrics_tmp_prefix', tmp_file_path)
+      setattr(pricer, '_metrics_tmp_prefix', metrics_fpath)
       setattr(pricer, '_algo_name', algo)
       setattr(pricer, '_nb_stocks_val', nb_stocks)
       setattr(pricer, '_model_name_val', stock_model)
@@ -581,6 +629,9 @@ def _run_algo(
   metrics_['f_level'] = f_level
   metrics_['f_amp'] = f_amp
   metrics_['f_period'] = f_period
+  metrics_['num_swings'] = num_swings
+  metrics_['exercise_dates'] = exercise_dates
+  metrics_['use_var'] = use_var
   metrics_['price'] = price
   metrics_['duration'] = duration
   metrics_['time_path_gen'] = gen_time
@@ -625,12 +676,12 @@ def _run_algo(
             counts = [int(np.sum(ex == i)) for i in range(1, nb_dates + 1)]
             stops_fpath = metrics_fpath + '.stops.csv'
             with open(stops_fpath, 'w') as sf:
-                # header: algo,num_dim,model_name,1,2,...,nb_dates
+                # header: algo,num_dim,model_name,strike,spot,1,2,...,nb_dates
                 header = [
-                    'algorithm', 'num_dim', 'model_name'
+                    'algorithm', 'num_dim', 'model_name', 'strike', 'spot'
                 ] + [str(i+1) for i in range(nb_dates)]
                 sf.write(','.join(header) + '\n')
-                row = [str(algo), str(nb_stocks), str(stock_model)] + [str(c) for c in counts]
+                row = [str(algo), str(nb_stocks), str(stock_model), str(strike), str(spot)] + [str(c) for c in counts]
                 sf.write(','.join(row) + '\n')
     except Exception:
         pass

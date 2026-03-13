@@ -48,7 +48,7 @@ class _DefaultConfig:
   strikes: Iterable[float] = (100,)
   maturities: Iterable[float] = (1,)
   nb_paths: Iterable[int] = (10000,)
-  nb_runs: int = 10
+  nb_runs: int = 1
   nb_stocks: Iterable[int] = (1,)
   payoffs: Iterable[str] = ('MaxCall',)
   spots: Iterable[float] = (100,)
@@ -97,17 +97,14 @@ class _SmallDimensionTable(_DefaultConfig):
 
 @dataclass
 class _VerySmallDimensionTable(_DefaultConfig):
-  nb_stocks: Iterable[int] = (5,10)
-  #(5, 10, 50)
-  algos: Iterable[str] = ('FQI',)
-  #('NLSM', 'RFQI', 'RLSM', 'LSM', 'FQI')
+  nb_stocks: Iterable[int] = (5,10,50)
+  algos: Iterable[str] = ('RLSM','LSM', 'FQI', 'RFQI', 'NLSM')
   
 
 @dataclass
 class _BigDimensionTable(_DefaultConfig):
   nb_stocks: Iterable[int] = (100, 500)
-  algos: Iterable[str] = ('RFQI',)
-  #('NLSM', 'RFQI', 'RLSM')
+  algos: Iterable[str] = ('NLSM', 'RFQI', 'RLSM')
 
 
 
@@ -144,6 +141,10 @@ table_electricity_small = _VerySmallDimensionTable(
 
 table_electricity_big = _BigDimensionTable(
    stock_models=['ElectricityMarketModel'], rate=(0.0,), 
+   use_spot_as_input=(False,), use_payoff_as_input=(False,))
+
+table_electricity_strikes = _VerySmallDimensionTable(
+   stock_models=['ElectricityMarketModel'], rate=(0.0,), strikes=[80,120],
    use_spot_as_input=(False,), use_payoff_as_input=(False,))
 
 #.venv\Scripts\python -m optimal_stopping.run.run_algo --configs=table_BS_MaxCallr0_big --nb_jobs=10

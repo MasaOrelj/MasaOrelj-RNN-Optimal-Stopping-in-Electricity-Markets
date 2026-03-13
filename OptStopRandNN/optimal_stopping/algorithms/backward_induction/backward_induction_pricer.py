@@ -40,13 +40,15 @@ class AmericanOptionPricer:
   """Computes the price of an American Option using backward recusrion.
   """
   def __init__(self, model, payoff, use_rnn=False, train_ITM_only=True,
-               use_path=False, use_payoff_as_input=False, use_spot_as_input=True):
+               use_path=False, use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
 
     #class model: The stochastic process model of the stock (e.g. Black Scholes).
     self.model = model
-    self.use_var = False
-    if self.model.return_var:
-      self.use_var = True
+    
+    if use_var is None:
+        self.use_var = getattr(self.model, "return_var", False)
+    else:
+        self.use_var = use_var
 
     #class payoff: The payoff function of the option (e.g. Max call).
     self.payoff = payoff
@@ -64,7 +66,7 @@ class AmericanOptionPricer:
     self.use_payoff_as_input = use_payoff_as_input
     #bool: whether to include spot `S` as part of regression input
     # Prefer explicit argument, but allow model attribute to override.
-    self.use_spot_as_input = getattr(self.model, 'use_spot_as_input', use_spot_as_input)
+    self.use_spot_as_input = use_spot_as_input
 
     # compute input dimension for regressors / networks
     self.input_dim = compute_input_dim(self.model, self.use_var,

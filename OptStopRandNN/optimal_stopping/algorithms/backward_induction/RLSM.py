@@ -15,10 +15,10 @@ class ReservoirLeastSquarePricer(LSM.LeastSquaresPricer):
   
     def __init__(self, model, payoff, hidden_size=10, nb_epochs=None,
                              nb_batches=None, train_ITM_only=True, use_payoff_as_input=False,
-                             use_spot_as_input=True):
+                             use_spot_as_input=True, use_var=None):
             super().__init__(model, payoff, train_ITM_only=train_ITM_only,
                                              use_payoff_as_input=use_payoff_as_input,
-                                             use_spot_as_input=use_spot_as_input)
+                                             use_spot_as_input=use_spot_as_input, use_var=use_var)
             
             if hidden_size < 0:
                 hidden_size = 50 + abs(hidden_size)*model.nb_stocks
@@ -31,10 +31,10 @@ class ReservoirLeastSquarePricerFast(LSM.LeastSquaresPricer):
     """ Computes the American option price by Randomized Least Square Monte Carlo."""
     def __init__(self, model, payoff, hidden_size=10, factors=(1.,),
                              nb_epochs=None, nb_batches=None, train_ITM_only=True,
-                             use_payoff_as_input=False, use_spot_as_input=True):
+                             use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
             super().__init__(model, payoff, train_ITM_only=train_ITM_only,
                                              use_payoff_as_input=use_payoff_as_input,
-                                             use_spot_as_input=use_spot_as_input)
+                                             use_spot_as_input=use_spot_as_input, use_var=use_var)
             
             if hidden_size < 0:
                 hidden_size = 50 + abs(hidden_size)*model.nb_stocks
@@ -49,10 +49,10 @@ class ReservoirLeastSquarePricerFastTanh(LSM.LeastSquaresPricer):
     """
     def __init__(self, model, payoff, hidden_size=10, factors=(1.,),
                              nb_epochs=None, nb_batches=None, train_ITM_only=True,
-                             use_payoff_as_input=False, use_spot_as_input=True):
+                             use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
             super().__init__(model, payoff, train_ITM_only=train_ITM_only,
                                              use_payoff_as_input=use_payoff_as_input,
-                                             use_spot_as_input=use_spot_as_input)
+                                             use_spot_as_input=use_spot_as_input, use_var=use_var)
             if hidden_size < 0:
                 hidden_size = 50 + abs(hidden_size)*model.nb_stocks
             state_size = self.input_dim
@@ -65,10 +65,10 @@ class ReservoirLeastSquarePricerFastSoftplus(LSM.LeastSquaresPricer):
     """
     def __init__(self, model, payoff, hidden_size=10, factors=(1.,),
                  nb_epochs=None, nb_batches=None, train_ITM_only=True,
-                 use_payoff_as_input=False, use_spot_as_input=True):
+                 use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
         super().__init__(model, payoff, train_ITM_only=train_ITM_only,
                          use_payoff_as_input=use_payoff_as_input,
-                         use_spot_as_input=use_spot_as_input)
+                         use_spot_as_input=use_spot_as_input, use_var=use_var)
         if hidden_size < 0:
             hidden_size = 50 + abs(hidden_size) * model.nb_stocks
         state_size = self.input_dim
@@ -82,10 +82,10 @@ class ReservoirLeastSquarePricerFastSoftplusReinit(LSM.LeastSquaresPricer):
     """
     def __init__(self, model, payoff, hidden_size=10, factors=(1.,),
                  nb_epochs=None, nb_batches=None, train_ITM_only=True,
-                 use_payoff_as_input=False, use_spot_as_input=True):
+                 use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
         super().__init__(model, payoff, train_ITM_only=train_ITM_only,
                          use_payoff_as_input=use_payoff_as_input,
-                         use_spot_as_input=use_spot_as_input)
+                         use_spot_as_input=use_spot_as_input, use_var=use_var)
         if hidden_size < 0:
             hidden_size = 50 + abs(hidden_size) * model.nb_stocks
         state_size = self.input_dim
@@ -99,9 +99,10 @@ class ReservoirLeastSquarePricerFastGELU(LSM.LeastSquaresPricer):
     """
     def __init__(self, model, payoff, hidden_size=10, factors=(1.,),
                  nb_epochs=None, nb_batches=None, train_ITM_only=True,
-                 use_payoff_as_input=False):
+                 use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
         super().__init__(model, payoff, train_ITM_only=train_ITM_only,
-                         use_payoff_as_input=use_payoff_as_input)
+                         use_payoff_as_input=use_payoff_as_input,
+                         use_spot_as_input=use_spot_as_input, use_var=use_var)
         if hidden_size < 0:
             hidden_size = 50 + abs(hidden_size) * model.nb_stocks
         state_size = self.input_dim
@@ -115,9 +116,10 @@ class ReservoirLeastSquarePricerFastSILU(LSM.LeastSquaresPricer):
     """
     def __init__(self, model, payoff, hidden_size=10, factors=(1.,),
                  nb_epochs=None, nb_batches=None, train_ITM_only=True,
-                 use_payoff_as_input=False):
+                 use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
         super().__init__(model, payoff, train_ITM_only=train_ITM_only,
-                         use_payoff_as_input=use_payoff_as_input)
+                         use_payoff_as_input=use_payoff_as_input,
+                         use_spot_as_input=use_spot_as_input, use_var=use_var)
         if hidden_size < 0:
             hidden_size = 50 + abs(hidden_size) * model.nb_stocks
         state_size = self.input_dim
@@ -131,9 +133,10 @@ class ReservoirLeastSquarePricerFastELU(LSM.LeastSquaresPricer):
     """
     def __init__(self, model, payoff, hidden_size=10, factors=(1.,),
                  nb_epochs=None, nb_batches=None, train_ITM_only=True,
-                 use_payoff_as_input=False):
+                 use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
         super().__init__(model, payoff, train_ITM_only=train_ITM_only,
-                         use_payoff_as_input=use_payoff_as_input)
+                         use_payoff_as_input=use_payoff_as_input,
+                         use_spot_as_input=use_spot_as_input, use_var=use_var)
         if hidden_size < 0:
             hidden_size = 50 + abs(hidden_size) * model.nb_stocks
         state_size = self.input_dim
@@ -148,10 +151,10 @@ class ReservoirLeastSquarePricerFastRidge(LSM.LeastSquaresPricer):
     def __init__(self, model, payoff, hidden_size=10, factors=(1.,),
                              ridge_coeff=1.,
                              nb_epochs=None, nb_batches=None, train_ITM_only=True,
-                             use_payoff_as_input=False, use_spot_as_input=True):
+                             use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
             super().__init__(model, payoff, train_ITM_only=train_ITM_only,
                                              use_payoff_as_input=use_payoff_as_input,
-                                             use_spot_as_input=use_spot_as_input)
+                                             use_spot_as_input=use_spot_as_input, use_var=use_var)
             if hidden_size < 0:
                 hidden_size = 50 + abs(hidden_size)*model.nb_stocks
             state_size = self.input_dim

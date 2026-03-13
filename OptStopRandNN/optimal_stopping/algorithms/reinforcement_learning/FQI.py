@@ -25,10 +25,10 @@ class FQI(reinforcement_learning_price.FQI_RL):
     """
 
     def __init__(self, model, payoff, nb_epochs=20, nb_batches=None,
-                 use_payoff_as_input=False, use_spot_as_input=True):
+                 use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
         super().__init__(model, payoff, nb_epochs,
                          use_payoff_as_input=use_payoff_as_input,
-                         use_spot_as_input=use_spot_as_input)
+                         use_spot_as_input=use_spot_as_input, use_var=use_var)
         self.bf = basis_functions.BasisFunctions(self.input_dim + 2)
         self.nb_base_fcts = self.bf.nb_base_fcts
 
@@ -52,11 +52,11 @@ class FQIFast(reinforcement_learning_price.FQI_RL):
 
     def __init__(self, model, payoff, nb_epochs=20, nb_batches=None,
                  train_ITM_only=True, use_payoff_as_input=False,
-                 use_spot_as_input=True):
+                 use_spot_as_input=True, use_var=None):
         super().__init__(model, payoff, nb_epochs,
                          train_ITM_only=train_ITM_only,
                          use_payoff_as_input=use_payoff_as_input,
-                         use_spot_as_input=use_spot_as_input)
+                         use_spot_as_input=use_spot_as_input, use_var=use_var)
         self.bf = basis_functions.BasisFunctions(self.input_dim + 2)
         self.nb_base_fcts = self.bf.nb_base_fcts
 
@@ -402,10 +402,10 @@ class FQIFastDeg1(FQIFast):
 
     def __init__(self, model, payoff, nb_epochs=20, nb_batches=None,
                  train_ITM_only=True,
-                 use_payoff_as_input=False):
+                 use_payoff_as_input=False, use_var=None):
         super().__init__(model, payoff, nb_epochs,
                          train_ITM_only=train_ITM_only,
-                         use_payoff_as_input=use_payoff_as_input)
+                         use_payoff_as_input=use_payoff_as_input, use_var=use_var)
         self.bf = basis_functions.BasisFunctionsDeg1(
             self.input_dim + 2)
         self.nb_base_fcts = self.bf.nb_base_fcts
@@ -445,11 +445,11 @@ class FQIFastRidge(FQIFast):
 
     def __init__(self, model, payoff, nb_epochs=20, nb_batches=None,
                  ridge_coeff=1., train_ITM_only=True,
-                 use_payoff_as_input=False):
+                 use_payoff_as_input=False, use_var=None):
         super().__init__(model=model, payoff=payoff, nb_epochs=nb_epochs,
                          nb_batches=nb_batches,
                          train_ITM_only=train_ITM_only,
-                         use_payoff_as_input=use_payoff_as_input)
+                         use_payoff_as_input=use_payoff_as_input, use_var=use_var)
         self.init_reg_model(ridge_coeff=ridge_coeff)
         # print("use ridge coeff: {}".format(ridge_coeff))
 

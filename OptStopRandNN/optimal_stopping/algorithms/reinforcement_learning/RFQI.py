@@ -54,11 +54,11 @@ class FQI_ReservoirFast(FQI.FQIFast):
 
   def __init__(self, model, payoff, nb_epochs=20, nb_batches=None,
                hidden_size=20, factors=(1.,), train_ITM_only=True,
-               use_payoff_as_input=False, use_spot_as_input=True):
+               use_payoff_as_input=False, use_spot_as_input=True, use_var=None):
     super().__init__(model, payoff, nb_epochs,
                      train_ITM_only=train_ITM_only,
                      use_payoff_as_input=use_payoff_as_input,
-                     use_spot_as_input=use_spot_as_input)
+                     use_spot_as_input=use_spot_as_input, use_var=use_var)
     del nb_batches, train_ITM_only
     self.model = model
     self.payoff = payoff

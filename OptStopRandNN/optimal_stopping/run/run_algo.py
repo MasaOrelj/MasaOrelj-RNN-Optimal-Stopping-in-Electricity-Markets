@@ -187,7 +187,8 @@ def _run_algos():
                        f'{int(time.time()*1000)}.csv')
   tmp_dirpath = f'{fpath}.tmp_results'
   os.makedirs(tmp_dirpath, exist_ok=True)
-  atexit.register(shutil.rmtree, tmp_dirpath)
+  atexit.register(lambda: shutil.rmtree(tmp_dirpath, ignore_errors=True))
+  #atexit.register(shutil.rmtree, tmp_dirpath)
   tmp_files_idx = 0
 
   delayed_jobs = []
@@ -352,21 +353,21 @@ def _run_algo(
   Args:
    metrics_fpath: file path, automatically generated & passed by
             _run_algos()
-   algo (str): the algo to train. See dict _ALGOS above.
-   dividend (float): the dividend of the stock model.
-   maturity (float): the maturity of the option.
-   nb_dates (int): number of equidistance dates at which option can be
-            exercised up to maturity.
-   nb_paths (int): number of paths that are simulated from stock model.
-            Half is used to learn the weigths, half to estimate the option
-            price.
-   nb_stocks (int): number of stocks used for the option (e.g. max call).
-   payoff (str): see dict _PAYOFFS.
-   drift (float): the drift of the stock model
-   spot (float): the value of the stocks at t=0.
-   stock_model (str): see dict _STOCK_MODELS.
-   strike (float): the strike price of the option, if used by the payoff.
-   volatility (float): the volatility of the stock model.
+                fpath = os.path.join(os.path.dirname(__file__), "../../output/metrics_draft",
+                                                         f'{int(time.time()*1000)}.csv')
+                tmp_dirpath = f'{fpath}.tmp_results'
+                os.makedirs(tmp_dirpath, exist_ok=True)
+                def _cleanup_tmp_dir(path):
+                    try:
+                        shutil.rmtree(path)
+                    except Exception:
+                        try:
+                            # try again but ignore errors (best-effort)
+                            shutil.rmtree(path, ignore_errors=True)
+                        except Exception:
+                            pass
+
+                atexit.register(_cleanup_tmp_dir, tmp_dirpath)
    mean (float): parameter for Heston stock model.
    speed (float): parameter for Heston stock model.
    correlation (float): parameter for Heston stock model.
@@ -659,32 +660,60 @@ def _run_algo(
     writer.writerow(metrics_)
     # write per-run stopping times histogram to a companion file so the
     # aggregator can combine them into a single CSV for the experiment
+    # write per-run stopping times histogram to a companion file so the
+# aggregator can combine them into a single CSV for the experiment
     try:
-        ex = getattr(pricer, 'last_ex_dates', None)
-        if ex is not None:
-            # if pricer provides the train/eval split, count only evaluation paths
-            split = getattr(pricer, 'split', None)
-            if split is not None and split > 0 and split < len(ex):
-                ex_to_count = ex[split:]
-            else:
-                ex_to_count = ex
-            ex = ex_to_count 
-            
-            if ex.size and ex.min() == 0:
-                ex = ex + 1
+        all_ex = getattr(pricer, 'all_exercise_dates', None)
 
-            counts = [int(np.sum(ex == i)) for i in range(1, nb_dates + 1)]
+        if all_ex is not None:
+            # swing case: count ALL exercises by date on evaluation paths
+            split = getattr(pricer, 'split', None)
+            if split is not None and split > 0 and split < len(all_ex):
+                all_ex_to_count = all_ex[split:, :]
+            else:
+                all_ex_to_count = all_ex
+
+            # ignore date 0, keep dates 1..nb_dates
+            counts = np.sum(all_ex_to_count[:, 1:], axis=0).astype(int).tolist()
+
             stops_fpath = metrics_fpath + '.stops.csv'
             with open(stops_fpath, 'w') as sf:
-                # header: algo,num_dim,model_name,strike,spot,1,2,...,nb_dates
                 header = [
                     'algorithm', 'num_dim', 'model_name', 'strike', 'spot'
-                ] + [str(i+1) for i in range(nb_dates)]
+                ] + [str(i + 1) for i in range(nb_dates)]
                 sf.write(','.join(header) + '\n')
-                row = [str(algo), str(nb_stocks), str(stock_model), str(strike), str(spot)] + [str(c) for c in counts]
+                row = [
+                    str(algo), str(nb_stocks), str(stock_model), str(strike), str(spot)
+                ] + [str(c) for c in counts]
                 sf.write(','.join(row) + '\n')
-    except Exception:
-        pass
+
+        else:
+            # old one-stop case: keep existing behavior unchanged
+            ex = getattr(pricer, 'last_ex_dates', None)
+            if ex is not None:
+                split = getattr(pricer, 'split', None)
+                if split is not None and split > 0 and split < len(ex):
+                    ex_to_count = ex[split:]
+                else:
+                    ex_to_count = ex
+                ex = ex_to_count
+
+                if ex.size and ex.min() == 0:
+                    ex = ex + 1
+
+                counts = [int(np.sum(ex == i)) for i in range(1, nb_dates + 1)]
+                stops_fpath = metrics_fpath + '.stops.csv'
+                with open(stops_fpath, 'w') as sf:
+                    header = [
+                        'algorithm', 'num_dim', 'model_name', 'strike', 'spot'
+                    ] + [str(i + 1) for i in range(nb_dates)]
+                    sf.write(','.join(header) + '\n')
+                    row = [
+                        str(algo), str(nb_stocks), str(stock_model), str(strike), str(spot)
+                    ] + [str(c) for c in counts]
+                    sf.write(','.join(row) + '\n')
+    except Exception as e:
+        print("stopping-times CSV error:", e)
 
 
 def main(argv):

@@ -28,7 +28,8 @@ class SwingRegressionPricer:
         num_swings=1,
         exercise_dates=None,
         return_diagnostics=False,
-        verbose=True,
+        verbose=False,
+        record_stopping_times=True,
     ):
         self.model = model
         self.payoff = payoff
@@ -44,6 +45,8 @@ class SwingRegressionPricer:
         self.exercise_dates = exercise_dates
         self.return_diagnostics = return_diagnostics
         self.verbose = verbose
+        self.record_stopping_times = record_stopping_times
+        self.all_exercise_dates = None
 
         if use_var is None:
             self.use_var = getattr(model, "return_var", False)
@@ -66,6 +69,73 @@ class SwingRegressionPricer:
         self.last_diagnostics = None
         self.last_ex_dates = None
         self.split = None
+
+    
+    def _roll_forward_stopping_times(self,
+    payoff_matrix,
+    ex_dates,
+    exercise_value_hat_store,
+    wait_value_hat_store,
+    split,):
+        
+        
+        """
+        Recover the realized swing exercise schedule on the evaluation paths only.
+
+        This uses the pathwise fitted values computed during backward induction.
+        It is valid because we roll forward on the same simulated paths.
+        """
+        nb_paths, nb_dates_plus_1 = payoff_matrix.shape
+        eps = np.finfo(float).eps
+
+        all_exercise_dates = np.zeros((nb_paths, nb_dates_plus_1), dtype=int)
+
+        # optional compatibility object; first realized exercise date per path
+        tau = np.full(nb_paths, fill_value=-1, dtype=int)
+
+        rights_left = np.zeros(nb_paths, dtype=int)
+        rights_left[split:] = self.num_swings
+
+        eval_mask = np.zeros(nb_paths, dtype=bool)
+        eval_mask[split:] = True
+
+        for k, date in enumerate(ex_dates):
+            active = eval_mask & (rights_left > 0)
+            if not np.any(active):
+                break
+
+            immediate = payoff_matrix[:, date]
+            exercise = np.zeros(nb_paths, dtype=bool)
+
+            # terminal date: exercise if payoff is positive and rights remain
+            if k == len(ex_dates) - 1:
+                exercise = active & (immediate > eps)
+            else:
+                for r in range(1, self.num_swings + 1):
+                    idx = active & (rights_left == r)
+                    if not np.any(idx):
+                        continue
+
+                    ex_hat = exercise_value_hat_store[(k, r)]
+                    wait_hat = wait_value_hat_store[(k, r)]
+
+                    exercise[idx] = (
+                        (immediate[idx] > eps)
+                        & (ex_hat[idx] > wait_hat[idx])
+                    )
+
+            all_exercise_dates[exercise, date] = 1
+
+            # first realized exercise date, for compatibility only
+            first_hit = exercise & (tau == -1)
+            tau[first_hit] = date
+
+            rights_left[exercise] -= 1
+
+        # paths that never exercised keep terminal date for compatibility
+        tau[tau == -1] = ex_dates[-1]
+
+        return all_exercise_dates, tau
 
     @staticmethod
     def _normalize_payoff_matrix(payoff_values):
@@ -200,6 +270,9 @@ class SwingRegressionPricer:
         continuation_wait_store = {}
         exercise_decision_store = {}
 
+        exercise_value_hat_store = {}
+        wait_value_hat_store = {}
+
         result = {
             "stock_paths": stock_paths,
             "var_paths": var_paths,
@@ -216,6 +289,7 @@ class SwingRegressionPricer:
             print(result)
 
         tau = np.full(nb_paths, fill_value=terminal_date, dtype=int)
+        all_exercise_dates = np.zeros((nb_paths, nb_dates_plus_1), dtype=int)
 
         # 6. Full backward induction
         for k in range(len(ex_dates) - 2, -1, -1):
@@ -257,6 +331,10 @@ class SwingRegressionPricer:
                     Y_wait, immediate_exercise_value, X_t
                 )
 
+                if self.record_stopping_times:
+                    exercise_value_hat_store[(k, r)] = exercise_value_hat.copy()
+                    wait_value_hat_store[(k, r)] = C_wait.copy()
+
                 exercise = (
                     (immediate_exercise_value > np.finfo(float).eps)
                     & (exercise_value_hat > C_wait)
@@ -267,11 +345,6 @@ class SwingRegressionPricer:
                     immediate_exercise_value[exercise]
                     + D * U_prev[r - 1, exercise]
                 )
-
-                eval_mask = np.zeros(nb_paths, dtype=bool)
-                eval_mask[split:] = True
-                new_stop = exercise & eval_mask & (tau == terminal_date)
-                tau[new_stop] = date
 
                 if self.return_diagnostics:
                     continuation_ex_store[(k, r)] = C_ex.copy()
@@ -309,6 +382,20 @@ class SwingRegressionPricer:
             }
         else:
             self.last_diagnostics = None
+        
+        if self.record_stopping_times:
+            all_exercise_dates, tau = self._roll_forward_stopping_times(
+                payoff_matrix=payoff_matrix,
+                ex_dates=ex_dates,
+                exercise_value_hat_store=exercise_value_hat_store,
+                wait_value_hat_store=wait_value_hat_store,
+                split=split,
+            )
+            self.all_exercise_dates = all_exercise_dates
+            self.last_ex_dates = tau
+        else:
+            self.all_exercise_dates = None
+            self.last_ex_dates = None
 
         return price_eval, time_for_path_gen
 
@@ -327,7 +414,8 @@ class SwingLeastSquaresPricer(SwingRegressionPricer):
         num_swings=1,
         exercise_dates=None,
         return_diagnostics=False,
-        verbose=True,
+        verbose=False,
+        record_stopping_times=True, 
     ):
         super().__init__(
             model=model,
@@ -342,6 +430,7 @@ class SwingLeastSquaresPricer(SwingRegressionPricer):
             exercise_dates=exercise_dates,
             return_diagnostics=return_diagnostics,
             verbose=verbose,
+            record_stopping_times=record_stopping_times,
         )
         self.regression = regression.LeastSquares(self.input_dim)
 
@@ -350,11 +439,11 @@ class SwingReservoirLeastSquarePricerFast(SwingRegressionPricer):
     def __init__(self, model, payoff, hidden_size=10, factors=(1.,), nb_epochs=None,
                  nb_batches=None, train_ITM_only=True, use_payoff_as_input=False,
                  use_spot_as_input=True, use_var=None, num_swings=1,
-                 exercise_dates=None, return_diagnostics=False, verbose=True):
+                 exercise_dates=None, return_diagnostics=False, verbose=False, record_stopping_times=True):
         super().__init__(
             model, payoff, nb_epochs, nb_batches, train_ITM_only,
             use_payoff_as_input, use_spot_as_input, use_var,
-            num_swings, exercise_dates, return_diagnostics, verbose
+            num_swings, exercise_dates, return_diagnostics, verbose, record_stopping_times
         )
         if hidden_size < 0:
             hidden_size = 50 + abs(hidden_size) * model.nb_stocks

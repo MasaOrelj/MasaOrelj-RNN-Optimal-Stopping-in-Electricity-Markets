@@ -1,0 +1,5 @@
+algo,model,payoff,drift,volatility,mean,speed,correlation,hurst,nb_stocks,nb_paths,nb_dates,spot,strike,dividend,maturity,nb_epochs,hidden_size,factors,ridge_coeff,use_payoff_as_input,train_ITM_only,use_path,use_var,price,duration,time_path_gen,comp_time,delta,gamma,theta,rho,vega,greeks_method,rate,alpha,sigma,beta,lam,x0,y0,dist_par,f_level,f_amp,f_period,num_swings,exercise_dates,price_upper_bound
+SwingLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,1,2,10,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,583.8743703418911,0.014128923416137695,0.005295515060424805,0.00883340835571289,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,3,,
+
+SwingRLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,1,2,10,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,473.98856266999655,0.03726768493652344,0.001004934310913086,0.03626275062561035,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,3,,
+

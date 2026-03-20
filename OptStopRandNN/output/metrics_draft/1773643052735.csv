@@ -1,0 +1,19 @@
+algo,model,payoff,drift,volatility,mean,speed,correlation,hurst,nb_stocks,nb_paths,nb_dates,spot,strike,dividend,maturity,nb_epochs,hidden_size,factors,ridge_coeff,use_payoff_as_input,train_ITM_only,use_path,use_var,price,duration,time_path_gen,comp_time,delta,gamma,theta,rho,vega,greeks_method,rate,alpha,sigma,beta,lam,x0,y0,dist_par,f_level,f_amp,f_period,num_swings,exercise_dates,price_upper_bound
+SwingRLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,5,20000,365,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,1704.77299413234,45.94270443916321,10.022178649902344,35.920525789260864,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,5,,
+
+SwingRLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,5,20000,365,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,5942.326212338217,161.76136183738708,9.110924005508423,152.65043783187866,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,20,,
+
+SwingRLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,5,20000,365,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,24666.232302869637,815.2091064453125,9.208843469619751,806.0002629756927,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,100,,
+
+SwingRLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,10,20000,365,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,2060.4558670129068,57.5189266204834,18.634286403656006,38.88464021682739,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,5,,
+
+SwingRLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,10,20000,365,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,6886.219923000401,174.0070662498474,18.21881079673767,155.78825545310974,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,20,,
+
+SwingRLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,10,20000,365,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,28014.342434044353,847.7981359958649,18.313202381134033,829.4849336147308,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,100,,
+
+SwingRLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,25,20000,365,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,2663.3714034367968,97.44416999816895,51.88836598396301,45.55580401420593,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,5,,
+
+SwingRLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,25,20000,365,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,8314.77679800522,239.96339893341064,56.59253215789795,183.3708667755127,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,20,,
+
+SwingRLSM,ElectricityMarketModel,MaxCall,0.02,0.2,0.01,2,-0.3,0.75,25,20000,365,100,1.0,0.0,1,30,20,"(1.0, 1.0, 1.0)",1.0,False,True,False,False,32978.37522534832,965.9227361679077,54.70885729789734,911.2138788700104,,,,,,central,0.02,7.0,1.4,200.0,4.0,0.0,0.0,0.4,100.0,0.5,1.0,100,,
+

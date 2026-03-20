@@ -74,6 +74,9 @@ class _DefaultConfig:
   f_amp: Iterable[float] = (0.5,)
   f_period: Iterable[float] = (1.0,)
   representations: Iterable[str] = ('TablePriceDuration',)
+  use_var: Iterable[typing.Optional[bool]] = (None,)
+  num_swings: Iterable[int] = (1,)
+  exercise_dates: Iterable[typing.Any] = (None,)
   # When adding a filter here, also add to filtering.py and read_data.py
 
 
@@ -146,6 +149,33 @@ table_electricity_big = _BigDimensionTable(
 table_electricity_strikes = _VerySmallDimensionTable(
    stock_models=['ElectricityMarketModel'], rate=(0.0,), strikes=[80,120],
    use_spot_as_input=(False,), use_payoff_as_input=(False,))
+
+
+
+table_swing_electricity_debug = _DefaultConfig(
+    algos=['SwingLSM','SwingRLSM'],
+    stock_models=['ElectricityMarketModel'],
+    nb_paths=[20000],
+    nb_dates=[30],
+    nb_runs=1,
+    nb_stocks=(1,),
+    #(5,10,25),
+
+    # payoff / contract
+    strikes=[1.0],
+    num_swings=(10,),
+    #(5,20,100),
+    exercise_dates=[None],  
+    #dist_par = np.linspace(0.2,2.00,10),
+    lam=np.linspace(1,10,10),
+
+    # regression inputs
+    use_spot_as_input=[True],
+    use_payoff_as_input=[False],
+    use_var=[False],
+    #[False, True],   
+
+)
 
 #.venv\Scripts\python -m optimal_stopping.run.run_algo --configs=table_BS_MaxCallr0_big --nb_jobs=10
 #.venv\Scripts\python -m optimal_stopping.run.run_algo --configs=table_electricity_small --nb_jobs=10
